@@ -5,52 +5,37 @@ version: "3.5"
 
 networks:
   syncthing:
-  syncthing-private:
 
 volumes:
   syncthing:
-  syncthing-db:
 
-secrets:
-  # Secrets format
-  # ${service_name}_${mount_point}:
-  #   name: ${STACK_NAME:-technocore}_${service_name}_${mount_point}
-  # #   external: true
-  syncthing_admin_username:
-    name: ${STACK_NAME:-technocore}_syncthing_admin_username
-    external: true
-  syncthing_admin_password:
-    name: ${STACK_NAME:-technocore}_syncthing_admin_password
-    external: true
-  syncthing_syncthing-db_username:
-    name: ${STACK_NAME:-technocore}_syncthing_syncthing-db_username
-    external: true
-  syncthing_syncthing-db_password:
-    name: ${STACK_NAME:-technocore}_syncthing_syncthing-db_password
-    external: true
+#secrets:
+#  syncthing_admin_password:
+#    name: ${STACK_NAME:-technocore}_syncthing_admin_password
+#    external: true
 
 services:
-  ## Uncomment this if Traefik will be used for routing traffick to this service.
-  #ingress:
-  #  networks:
-  #    - syncthing
+  # Uncomment this if Traefik will be used for routing traffick to this service.
+  ingress:
+    networks:
+      - syncthing
 
   syncthing:
     deploy:
       labels:
-      #  - traefik.frontend.rule=$SYNCTHING_ROUTING_LABEL
-      #  - traefik.frontend.priority=$SYNCTHING_ROUTING_LABEL_PRIORITY
-      #  - traefik.port=SET_ME_PLEASE
+        - traefik.frontend.rule=$SYNCTHING_ROUTING_LABEL
+        - traefik.frontend.priority=$SYNCTHING_ROUTING_LABEL_PRIORITY
+        - traefik.port=8384
       #  - ${TRAEFIK_BASIC_AUTH}
-      #  - traefik.enable=true
-      #  # You'll need to set applicaiton's port here.
-      #  - traefik.tags=ingress 
-      #  - traefik.docker.network=${STACK_NAME:-technocore}_syncthing
-      #  # Traefik service that listens to HTTP
-      #  - traefik.redirectorservice.frontend.entryPoints=http
-      #  - traefik.redirectorservice.frontend.redirect.entryPoint=https
-      #  # Traefik service that listens to HTTPS
-      #  - traefik.webservice.frontend.entryPoints=https
+        - traefik.enable=true
+        # You'll need to set applicaiton's port here.
+        - traefik.tags=ingress 
+        - traefik.docker.network=${STACK_NAME:-technocore}_syncthing
+        # Traefik service that listens to HTTP
+        - traefik.redirectorservice.frontend.entryPoints=http
+        - traefik.redirectorservice.frontend.redirect.entryPoint=https
+        # Traefik service that listens to HTTPS
+        - traefik.webservice.frontend.entryPoints=https
         - com.ouroboros.enable=true
       mode: global
       restart_policy:
@@ -59,56 +44,24 @@ services:
         constraints:
           - node.role == manager
       # Big services will need this modified or removed.
-      resources:
-        limits:
-          memory: 128M
-        reservations:
-          memory: 64M
-    environment:
-      # Sometimes you have to pass in ${DOMAIN} to enable the correct link paths to be generated.
-      # Othertimes you can use http:// or https:// for the website. Weird trick.
-      - ADMIN_USER=${ADMIN_USER}
-    image: ${image_provider:-scififarms}/technocore-syncthing:${TAG:-latest}
+      #resources:
+      #  limits:
+      #    memory: 128M
+      #  reservations:
+      #    memory: 64M
+    #environment:
+    #  # Sometimes you have to pass in ${DOMAIN} to enable the correct link paths to be generated.
+    #  # Othertimes you can use http:// or https:// for the website. Weird trick.
+    #  - ADMIN_USER=${ADMIN_USER}
+    image: syncthing/syncthing # ${image_provider:-scififarms}/technocore-syncthing:${TAG:-latest}
     logging:
       driver: "${LOGGING_DRIVER}"
       options:
         tag: "{{.Name}}"
     networks:
       - syncthing
-      - syncthing-private
     #secrets:
     #  - source: syncthing_syncthing_db_password
     #    target: syncthing_db_password
     volumes:
-      # Likely need to change this
-      - syncthing:/var/lib/syncthing
-      # This should in fact be all upper case.
-      - ${DEV_MOUNT_syncthing_SHELL_MIGRATIONS:-$EMPTY_MOUNT}
-
-  syncthing_db:
-    deploy:
-      labels:
-        - com.ouroboros.enable=true
-      mode: global
-      restart_policy:
-        condition: any
-    #environment:
-    image: ${image_provider:-scififarms}/technocore-syncthing-db:${TAG:-latest}
-    logging:
-      driver: "${LOGGING_DRIVER}"
-      options:
-        tag: "{{.Name}}"
-    networks:
-      - syncthing-private
-    secrets:
-      - source: syncthing_db_admin_username
-        target: admin_username
-      - source: syncthing_db_admin_password
-        target: admin_password
-      - source: syncthing_db_syncthing_username
-        target: syncthing_username
-      - source: syncthing_db_syncthing_password
-        target: syncthing_password
-    volumes:
-      # Likely need to change this
-      - syncthing-db:/var/lib/syncthing
+      - syncthing:/var/syncthing 
