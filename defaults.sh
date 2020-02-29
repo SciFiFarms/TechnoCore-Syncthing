@@ -8,6 +8,10 @@
 
 # Leave blank to disable this service by default.
 set_service_flag $service_name
+
+if ! docker volume ls | grep -w "${STACK_NAME}_syncthing" 1>&2 ; then
+    export SERVICE_CONFIG_SYNCTHING_INIT=${TECHNOCORE_SERVICES}/syncthing/init.yml
+fi
 #set_service_flag $service_name yes
 
 # Sets the application prefix depending on what $INGRESS_TYPE is set to. 

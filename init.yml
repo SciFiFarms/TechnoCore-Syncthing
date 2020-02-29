@@ -1,0 +1,24 @@
+version: "3.5"
+volumes:
+  syncthing:
+
+services:
+
+  syncthing_volume_init:
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+    environment:
+      - STACK_NAME=${STACK_NAME}
+    command: >
+      bash -c "chown -R 1000:1000 /mnt/syncthing && docker service rm ${STACK_NAME}_syncthing_volume_init"
+
+    image: ${image_provider:-scififarms}/technocore:${TAG:-latest}
+    logging:
+      driver: "${LOGGING_DRIVER}"
+      options:
+        tag: "{{.Name}}"
+    volumes:
+      - syncthing:/mnt/syncthing
+      - /var/run/docker.sock:/var/run/docker.sock
